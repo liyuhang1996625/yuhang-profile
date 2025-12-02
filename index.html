@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>yuhang profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              neon: '#00FF41', // Matrix/Hacker Green
+              darkbg: '#050505',
+              tech: {
+                50: '#F5F5F5',
+                100: '#E5E5E5',
+                200: '#CCCCCC',
+                300: '#B3B3B3',
+                400: '#999999',
+                500: '#808080',
+                600: '#666666',
+                700: '#4D4D4D',
+                800: '#333333',
+                900: '#1A1A1A',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Hide scrollbar */
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      body {
+        background-color: #F8F8F8;
+        color: #111111;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      
+      .dark body {
+        background-color: #050505;
+        color: #f0f0f0;
+      }
+      
+      /* Geeky Grid Background - Light Mode */
+      .bg-grid {
+        background-size: 40px 40px;
+        background-image: 
+          linear-gradient(to right, #E5E5E5 1px, transparent 1px),
+          linear-gradient(to bottom, #E5E5E5 1px, transparent 1px);
+        mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+      }
+
+      /* Geeky Grid Background - Dark Mode */
+      .dark .bg-grid {
+        background-image: 
+          linear-gradient(to right, #222222 1px, transparent 1px),
+          linear-gradient(to bottom, #222222 1px, transparent 1px);
+      }
+      
+      ::selection {
+        background: #00FF41;
+        color: #000;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.25",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
