@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUpRight, FolderOpen } from 'lucide-react';
+import { ArrowUpRight, Briefcase } from 'lucide-react';
 import { Project, Language } from '../types';
 
 interface ProjectRowProps {
@@ -111,18 +111,28 @@ const Portfolio: React.FC<PortfolioProps> = ({ lang, projects, onSelectProject }
   return (
     <section id="works" className="py-24 px-6 md:px-12 bg-[#F8F8F8] dark:bg-darkbg transition-colors duration-300">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-end justify-between mb-12 pb-4 border-b-2 border-black dark:border-white/20">
-          <div>
-            <div className="flex items-center gap-2 mb-2 text-tech-500 dark:text-tech-400">
-                <FolderOpen size={16} className="dark:text-neon" />
-                <h2 className="font-mono text-xs font-bold uppercase tracking-widest dark:text-white">
-                  {lang === 'zh' ? '精选作品' : 'Selected_Works'}
-                </h2>
-            </div>
-          </div>
-          <div className="font-mono text-[10px] text-tech-400 dark:text-tech-600 hidden md:block">
-            INDEX: DIR_ROOT/WORKS
-          </div>
+        <div className="mb-12">
+            <motion.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+            >
+                 <div className="inline-flex items-center gap-2 border border-black/10 dark:border-neon/30 px-3 py-1 rounded-full mb-4 bg-white dark:bg-neon/10 shadow-sm">
+                    <Briefcase size={12} className="text-black dark:text-neon" />
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-black dark:text-neon">
+                      {lang === 'zh' ? '商业项目' : 'Commercial_Projects'}
+                    </span>
+                </div>
+                
+                <div className="flex items-end justify-between pb-4 border-b-2 border-black dark:border-white/20">
+                     <h2 className="text-3xl md:text-4xl font-bold tracking-tighter text-black dark:text-white">
+                        {lang === 'zh' ? '精选作品' : 'SELECTED WORKS'}
+                    </h2>
+                    <div className="font-mono text-[10px] text-tech-400 dark:text-tech-600 hidden md:block">
+                        INDEX: DIR_ROOT/WORKS
+                    </div>
+                </div>
+            </motion.div>
         </div>
 
         <div className="flex flex-col">

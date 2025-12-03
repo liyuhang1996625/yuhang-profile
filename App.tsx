@@ -8,13 +8,14 @@ import Footer from './components/Footer';
 import ProjectDetail from './components/ProjectDetail';
 import AdminDashboard from './components/cms/AdminDashboard';
 import AdminLogin from './components/cms/AdminLogin';
+import CustomCursor from './components/CustomCursor';
 import { AnimatePresence } from 'framer-motion';
 import { Language, Theme, Project } from './types';
 import { PORTFOLIO_PROJECTS, EXPERIMENTAL_PROJECTS } from './constants';
 
 function App() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [lang, setLang] = useState<Language>('zh');
+  const [lang, setLang] = useState<Language>('en'); // Changed default to 'en'
   const [theme, setTheme] = useState<Theme>('dark');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   
@@ -81,11 +82,13 @@ function App() {
 
   return (
     <div className={`min-h-screen transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'} dark:bg-darkbg`}>
+      <CustomCursor />
       <Navbar lang={lang} theme={theme} toggleTheme={toggleTheme} toggleLang={toggleLang} />
       <main>
-        <Hero lang={lang} />
+        {/* Pass theme to Hero for WebGL color update */}
+        <Hero lang={lang} theme={theme} />
         <Portfolio lang={lang} projects={projects} onSelectProject={setSelectedProject} />
-        <Experiments lang={lang} projects={experiments} />
+        <Experiments lang={lang} projects={experiments} onSelectProject={setSelectedProject} />
       </main>
       <Footer lang={lang} onOpenAdmin={() => setShowAdminLogin(true)} />
 

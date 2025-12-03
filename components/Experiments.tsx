@@ -4,14 +4,22 @@ import { motion } from 'framer-motion';
 import { Project, Language } from '../types';
 import { Terminal, Cpu } from 'lucide-react';
 
-const ExperimentCard: React.FC<{ project: Project; index: number; lang: Language }> = ({ project, index, lang }) => {
+interface ExperimentCardProps {
+    project: Project;
+    index: number;
+    lang: Language;
+    onClick: () => void;
+}
+
+const ExperimentCard: React.FC<ExperimentCardProps> = ({ project, index, lang, onClick }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="group relative bg-[#111] dark:bg-tech-900/40 border border-white/10 dark:border-tech-800 p-4 hover:border-white/30 dark:hover:border-neon/50 transition-colors"
+      onClick={onClick}
+      className="group relative bg-[#111] dark:bg-tech-900/40 border border-white/10 dark:border-tech-800 p-4 hover:border-white/30 dark:hover:border-neon/50 transition-colors cursor-pointer"
     >
       <div className="flex justify-between items-start mb-4 border-b border-white/5 pb-2">
         <div className="font-mono text-[10px] text-white/40 dark:text-tech-500">{`EXP_${project.id.toUpperCase()}`}</div>
@@ -38,11 +46,17 @@ const ExperimentCard: React.FC<{ project: Project; index: number; lang: Language
   );
 };
 
-const Experiments: React.FC<{ lang: Language; projects: Project[] }> = ({ lang, projects }) => {
+interface ExperimentsProps {
+    lang: Language;
+    projects: Project[];
+    onSelectProject: (p: Project) => void;
+}
+
+const Experiments: React.FC<ExperimentsProps> = ({ lang, projects, onSelectProject }) => {
   return (
     <section id="playground" className="py-24 px-6 md:px-12 bg-black dark:bg-[#0a0a0a] text-white border-t border-tech-800 dark:border-tech-900 transition-colors duration-300">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="mb-12">
             <motion.div
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
@@ -54,34 +68,43 @@ const Experiments: React.FC<{ lang: Language; projects: Project[] }> = ({ lang, 
                       {lang === 'zh' ? '实验性项目' : 'Playground'}
                     </span>
                 </div>
-                <h3 className="text-3xl md:text-4xl font-bold tracking-tighter">
-                    LABS & <span className="font-mono text-white/40 font-normal text-2xl">PROTOTYPES</span>
-                </h3>
+                
+                <div className="flex items-end justify-between pb-4 border-b-2 border-white/20 dark:border-white/20">
+                    <h2 className="text-3xl md:text-4xl font-bold tracking-tighter text-white">
+                        {lang === 'zh' ? '想法与探索' : 'LABS & PROTOTYPES'}
+                    </h2>
+                    <div className="font-mono text-[10px] text-white/40 dark:text-tech-600 hidden md:block text-right">
+                        INDEX: DIR_ROOT/LABS
+                    </div>
+                </div>
             </motion.div>
-            
-            <div className="font-mono text-xs text-white/30 max-w-xs leading-relaxed text-right hidden md:block">
-                {lang === 'zh' 
-                  ? '执行实验性视觉效果。\n渲染引擎: WebGL / p5.js'
-                  : 'Executing experimental visuals.\nRender engine: WebGL / p5.js'}
-            </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {projects.map((project, index) => (
-                <ExperimentCard key={project.id} project={project} index={index} lang={lang} />
+                <ExperimentCard 
+                    key={project.id} 
+                    project={project} 
+                    index={index} 
+                    lang={lang} 
+                    onClick={() => onSelectProject(project)}
+                />
             ))}
             
-            {/* Placeholder for "More" to complete the grid */}
+            {/* Placeholder for "Coming Soon" to complete the grid */}
             <motion.div 
                  initial={{ opacity: 0 }}
                  whileInView={{ opacity: 1 }}
                  viewport={{ once: true }}
                  transition={{ delay: 0.3 }}
-                 className="flex flex-col items-center justify-center border border-white/5 border-dashed bg-white/[0.02] hover:bg-white/[0.05] dark:hover:bg-neon/5 dark:hover:border-neon/30 transition-colors cursor-pointer min-h-[200px]"
+                 className="group flex flex-col items-center justify-center border border-white/5 border-dashed bg-white/[0.02] hover:bg-white/[0.05] dark:hover:bg-neon/5 dark:hover:border-neon/50 transition-all cursor-pointer min-h-[200px]"
             >
-                <Cpu size={24} className="text-white/20 dark:text-neon/50 mb-2" />
-                <span className="font-mono text-xs text-white/30 dark:text-neon/50">
-                  {lang === 'zh' ? '加载更多()' : 'Load_More()'}
+                <Cpu 
+                    size={24} 
+                    className="text-white/20 dark:text-neon/50 mb-2 group-hover:text-white dark:group-hover:text-neon transition-all duration-500 group-hover:rotate-180" 
+                />
+                <span className="font-mono text-xs text-white/30 dark:text-neon/50 group-hover:text-white dark:group-hover:text-neon group-hover:tracking-[0.2em] transition-all duration-300">
+                  {lang === 'zh' ? '敬请期待' : 'COMING_SOON'}
                 </span>
             </motion.div>
         </div>

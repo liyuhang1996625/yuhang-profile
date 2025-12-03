@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowUpRight, Layers, User, Calendar } from 'lucide-react';
+import { X, ArrowUpRight, Layers, User, Calendar, ArrowLeft } from 'lucide-react';
 import { Project, Language } from '../types';
 
 interface ProjectDetailProps {
@@ -29,10 +29,20 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, lang, onClose })
     >
       {/* Sticky Header */}
       <div className="fixed top-0 left-0 right-0 z-[101] flex justify-between items-center px-6 py-5 md:px-12 bg-white/90 dark:bg-darkbg/90 backdrop-blur-md border-b border-tech-200 dark:border-tech-800">
-        <div className="font-mono text-xs text-tech-500 dark:text-tech-400">
-           {lang === 'zh' ? '项目详情' : 'PROJECT_DETAILS'}
-           <span className="mx-2 text-tech-300 dark:text-tech-700">/</span>
-           <span className="text-black dark:text-neon">{project.id.padStart(2, '0')}</span>
+        <div className="flex items-center gap-4">
+            <button 
+                onClick={onClose}
+                className="p-1 -ml-1 text-tech-500 dark:text-tech-400 hover:text-black dark:hover:text-neon transition-colors"
+                aria-label="Back to Home"
+            >
+                <ArrowLeft size={20} />
+            </button>
+            <div className="h-4 w-px bg-tech-200 dark:bg-tech-800 hidden md:block"></div>
+            <div className="font-mono text-xs text-tech-500 dark:text-tech-400">
+               {lang === 'zh' ? '项目详情' : 'PROJECT_DETAILS'}
+               <span className="mx-2 text-tech-300 dark:text-tech-700">/</span>
+               <span className="text-black dark:text-neon">{project.id.padStart(2, '0')}</span>
+            </div>
         </div>
         
         <button 
