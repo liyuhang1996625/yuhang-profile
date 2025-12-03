@@ -1,13 +1,14 @@
 
 import React, { useState, useRef } from 'react';
-import { Project, Language } from '../../types';
-import { Save, Plus, Trash2, X, Download, RotateCcw, Upload, Image as ImageIcon, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { Project, Language, ContactInfo } from '../../types';
+import { Save, Plus, Trash2, X, Download, RotateCcw, Upload, Image as ImageIcon, ChevronUp, ChevronDown, Eye, Settings, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AdminDashboardProps {
   projects: Project[];
   experiments: Project[];
-  onSave: (projects: Project[], experiments: Project[]) => void;
+  contactInfo: ContactInfo;
+  onSave: (projects: Project[], experiments: Project[], contactInfo: ContactInfo) => void;
   onClose: () => void;
   lang: Language;
 }
@@ -85,7 +86,6 @@ const ImageUploadControl = ({
             </div>
             {value && (
                 <div className="mt-2 w-full bg-tech-900/50 border border-tech-800 relative group">
-                    {/* UPDATED: Removed fixed height (h-32), added max-h constraint, ensured object-contain shows full image */}
                     <img 
                         src={value} 
                         alt="Preview" 
@@ -95,6 +95,110 @@ const ImageUploadControl = ({
                         PREVIEW (ORIGINAL RATIO)
                     </div>
                 </div>
+            )}
+        </div>
+    );
+};
+
+const FileUploadControl = ({ 
+    label, 
+    value, 
+    onChange 
+}: { 
+    label: string, 
+    value: string, 
+    onChange: (val: string) => void 
+}) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+
+    const processFile = (file: File) => {
+        if (file.type !== 'application/pdf') {
+            alert("Please upload a PDF file.");
+            return;
+        }
+
+        // 3MB limit for PDF to avoid immediate localStorage crash (though 5MB is total limit)
+        if (file.size > 3 * 1024 * 1024) {
+            alert("WARNING: File is larger than 3MB. Browser LocalStorage has a strict 5MB limit. Please compress your PDF or use an external URL.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+                onChange(reader.result);
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) processFile(file);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) processFile(file);
+    };
+
+    return (
+        <div className="flex flex-col gap-2">
+            <label className="font-mono text-[10px] text-tech-500 uppercase">{label}</label>
+            <div 
+                className={`flex gap-2 items-start p-2 border border-dashed transition-colors ${
+                    isDragging ? 'border-neon bg-neon/10' : 'border-transparent'
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+            >
+                <div className="flex-1 relative group">
+                    <input 
+                        type="text" 
+                        value={value} 
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder="https://... or Drag PDF here"
+                        className="w-full bg-black border border-tech-700 text-white font-mono text-xs p-2 pl-8 focus:border-neon focus:outline-none transition-colors truncate"
+                    />
+                    <div className="absolute left-2 top-2 text-tech-500">
+                        <FileText size={14} />
+                    </div>
+                </div>
+                
+                <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="application/pdf" 
+                    onChange={handleFileChange} 
+                />
+                <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1 bg-tech-800 hover:bg-tech-700 text-white px-3 py-2 border border-tech-600 transition-colors shrink-0"
+                    title="Upload Local PDF"
+                >
+                    <Upload size={14} />
+                </button>
+            </div>
+            {value.startsWith('data:application/pdf') && (
+                 <div className="text-[10px] text-neon font-mono flex items-center gap-2 mt-1">
+                    <div className="w-2 h-2 bg-neon rounded-full animate-pulse"></div>
+                    PDF LOADED (Base64)
+                 </div>
             )}
         </div>
     );
@@ -330,10 +434,11 @@ const ProjectEditor: React.FC<{
     );
 };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, experiments, onSave, onClose }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, experiments, contactInfo, onSave, onClose }) => {
     const [localProjects, setLocalProjects] = useState<Project[]>(projects);
     const [localExperiments, setLocalExperiments] = useState<Project[]>(experiments);
-    const [activeTab, setActiveTab] = useState<'works' | 'labs'>('works');
+    const [localContactInfo, setLocalContactInfo] = useState<ContactInfo>(contactInfo);
+    const [activeTab, setActiveTab] = useState<'works' | 'labs' | 'settings'>('works');
 
     // Generic Handlers
     const updateList = (list: Project[], index: number, newData: Project) => {
@@ -400,15 +505,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, experiments, 
         setLocalExperiments([...localExperiments, newExp]);
     };
 
+    // Contact Info Handlers
+    const handleContactChange = (field: keyof ContactInfo, value: string) => {
+        setLocalContactInfo({ ...localContactInfo, [field]: value });
+    };
+
     const generateCode = () => {
         const code = `
-import { Project, NavItem } from './types';
+import { Project, NavItem, ContactInfo } from './types';
 
 export const NAV_ITEMS: NavItem[] = [
   { id: 'about', label: 'About', label_zh: '关于', href: '#about' },
   { id: 'works', label: 'Works', label_zh: '作品', href: '#works' },
   { id: 'playground', label: 'Playground', label_zh: '实验', href: '#playground' },
 ];
+
+export const CONTACT_INFO: ContactInfo = ${JSON.stringify(localContactInfo, null, 2)};
 
 export const PORTFOLIO_PROJECTS: Project[] = ${JSON.stringify(localProjects, null, 2)};
 
@@ -477,6 +589,19 @@ export const EXPERIMENTAL_PROJECTS: Project[] = ${JSON.stringify(localExperiment
                         <span>TBL_LABS</span>
                         <span className="text-[10px] opacity-50 bg-black px-1 rounded border border-tech-800">{localExperiments.length}</span>
                     </button>
+                    
+                    <div className="my-2 border-t border-tech-800 opacity-50"></div>
+                    
+                    <button 
+                         onClick={() => setActiveTab('settings')}
+                         className={`text-left px-3 py-3 text-xs border-l-2 flex justify-between items-center group transition-all ${
+                            activeTab === 'settings' 
+                            ? 'border-neon bg-neon/10 text-white' 
+                            : 'border-transparent text-tech-400 hover:text-white hover:bg-white/5'
+                        }`}
+                    >
+                        <span className="flex items-center gap-2"><Settings size={12} /> TBL_GLOBAL</span>
+                    </button>
                 </div>
 
                 {/* Main Content */}
@@ -486,25 +611,29 @@ export const EXPERIMENTAL_PROJECTS: Project[] = ${JSON.stringify(localExperiment
                              <div>
                                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
                                     <span className="text-neon">{'>'}</span> 
-                                    {activeTab === 'works' ? 'PORTFOLIO_PROJECTS' : 'EXPERIMENTAL_PROJECTS'}
+                                    {activeTab === 'works' && 'PORTFOLIO_PROJECTS'}
+                                    {activeTab === 'labs' && 'EXPERIMENTAL_PROJECTS'}
+                                    {activeTab === 'settings' && 'GLOBAL_SETTINGS'}
                                  </h2>
                                  <p className="text-[10px] text-tech-500 mt-1 font-mono">
-                                     Drag & Drop not supported. Use arrows to reorder.
+                                     {activeTab === 'settings' ? 'Configure site-wide parameters.' : 'Drag & Drop not supported. Use arrows to reorder.'}
                                  </p>
                              </div>
-                             <button 
-                                onClick={activeTab === 'works' ? handleAddProject : handleAddExp}
-                                className="flex items-center gap-2 bg-tech-800 hover:bg-neon hover:text-black px-4 py-2 text-xs font-bold transition-all border border-tech-700 hover:shadow-[0_0_15px_rgba(0,255,65,0.4)]"
-                             >
-                                <Plus size={14} /> ADD_ENTRY
-                             </button>
+                             {activeTab !== 'settings' && (
+                                <button 
+                                    onClick={activeTab === 'works' ? handleAddProject : handleAddExp}
+                                    className="flex items-center gap-2 bg-tech-800 hover:bg-neon hover:text-black px-4 py-2 text-xs font-bold transition-all border border-tech-700 hover:shadow-[0_0_15px_rgba(0,255,65,0.4)]"
+                                >
+                                    <Plus size={14} /> ADD_ENTRY
+                                </button>
+                             )}
                         </div>
 
                         <div className="space-y-4">
-                            {activeTab === 'works' ? (
+                            {activeTab === 'works' && (
                                 localProjects.map((p, i) => (
                                     <ProjectEditor 
-                                        key={p.id + '_' + i} // using index in key to ensure re-render on move
+                                        key={p.id + '_' + i} 
                                         project={p} 
                                         onChange={(newData) => handleProjectChange(i, newData)}
                                         onDelete={() => handleDeleteProject(i)}
@@ -514,7 +643,9 @@ export const EXPERIMENTAL_PROJECTS: Project[] = ${JSON.stringify(localExperiment
                                         isLast={i === localProjects.length - 1}
                                     />
                                 ))
-                            ) : (
+                            )}
+
+                            {activeTab === 'labs' && (
                                 localExperiments.map((p, i) => (
                                     <ProjectEditor 
                                         key={p.id + '_' + i}
@@ -527,6 +658,41 @@ export const EXPERIMENTAL_PROJECTS: Project[] = ${JSON.stringify(localExperiment
                                         isLast={i === localExperiments.length - 1}
                                     />
                                 ))
+                            )}
+
+                            {activeTab === 'settings' && (
+                                <div className="border border-neon bg-black p-6 rounded-sm">
+                                    <h3 className="text-neon font-mono text-xs mb-6 border-b border-tech-800 pb-2">CONTACT_CONFIGURATION</h3>
+                                    
+                                    <div className="grid grid-cols-1 gap-6">
+                                        <TextArea 
+                                            label="Footer Tagline (EN)" 
+                                            value={localContactInfo.tagline} 
+                                            onChange={(v) => handleContactChange('tagline', v)} 
+                                            rows={1}
+                                        />
+                                        <TextArea 
+                                            label="Footer Tagline (ZH)" 
+                                            value={localContactInfo.tagline_zh} 
+                                            onChange={(v) => handleContactChange('tagline_zh', v)} 
+                                            rows={1}
+                                        />
+                                        
+                                        <div className="border-t border-tech-800 my-2"></div>
+                                        
+                                        <Input 
+                                            label="Primary Email Address" 
+                                            value={localContactInfo.email} 
+                                            onChange={(v) => handleContactChange('email', v)} 
+                                        />
+                                        
+                                        <FileUploadControl 
+                                            label="Resume / CV File (Upload PDF)" 
+                                            value={localContactInfo.resumeUrl} 
+                                            onChange={(v) => handleContactChange('resumeUrl', v)} 
+                                        />
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -549,7 +715,7 @@ export const EXPERIMENTAL_PROJECTS: Project[] = ${JSON.stringify(localExperiment
                     </button>
                     
                     <button 
-                        onClick={() => onSave(localProjects, localExperiments)}
+                        onClick={() => onSave(localProjects, localExperiments, localContactInfo)}
                         className="flex items-center gap-2 px-6 py-2 bg-neon text-black hover:bg-white text-xs font-bold transition-all shadow-[0_0_15px_rgba(0,255,65,0.3)] hover:shadow-[0_0_20px_rgba(255,255,255,0.5)]"
                     >
                         <Save size={14} /> SAVE & APPLY

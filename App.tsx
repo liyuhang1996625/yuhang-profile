@@ -10,12 +10,12 @@ import AdminDashboard from './components/cms/AdminDashboard';
 import AdminLogin from './components/cms/AdminLogin';
 import CustomCursor from './components/CustomCursor';
 import { AnimatePresence } from 'framer-motion';
-import { Language, Theme, Project } from './types';
-import { PORTFOLIO_PROJECTS, EXPERIMENTAL_PROJECTS } from './constants';
+import { Language, Theme, Project, ContactInfo } from './types';
+import { PORTFOLIO_PROJECTS, EXPERIMENTAL_PROJECTS, CONTACT_INFO } from './constants';
 
 function App() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [lang, setLang] = useState<Language>('en'); // Changed default to 'en'
+  const [lang, setLang] = useState<Language>('en'); 
   const [theme, setTheme] = useState<Theme>('dark');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   
@@ -23,9 +23,10 @@ function App() {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   
-  // Data State (initialized from LocalStorage or Constants)
+  // Data State
   const [projects, setProjects] = useState<Project[]>([]);
   const [experiments, setExperiments] = useState<Project[]>([]);
+  const [contactInfo, setContactInfo] = useState<ContactInfo>(CONTACT_INFO);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -37,14 +38,17 @@ function App() {
             const parsed = JSON.parse(savedData);
             setProjects(parsed.projects || PORTFOLIO_PROJECTS);
             setExperiments(parsed.experiments || EXPERIMENTAL_PROJECTS);
+            setContactInfo(parsed.contactInfo || CONTACT_INFO);
         } catch (e) {
             console.error("Failed to load saved data", e);
             setProjects(PORTFOLIO_PROJECTS);
             setExperiments(EXPERIMENTAL_PROJECTS);
+            setContactInfo(CONTACT_INFO);
         }
     } else {
         setProjects(PORTFOLIO_PROJECTS);
         setExperiments(EXPERIMENTAL_PROJECTS);
+        setContactInfo(CONTACT_INFO);
     }
 
     return () => clearTimeout(timer);
@@ -67,17 +71,26 @@ function App() {
     setLang(prev => prev === 'en' ? 'zh' : 'en');
   };
 
-  const handleCmsSave = (newProjects: Project[], newExperiments: Project[]) => {
+  const handleCmsSave = (newProjects: Project[], newExperiments: Project[], newContact: ContactInfo) => {
       setProjects(newProjects);
       setExperiments(newExperiments);
+      setContactInfo(newContact);
       
       // Save to local storage for persistence across reloads
-      localStorage.setItem('portfolio_data', JSON.stringify({
-          projects: newProjects,
-          experiments: newExperiments
-      }));
-      
-      setShowAdminDashboard(false);
+      try {
+          localStorage.setItem('portfolio_data', JSON.stringify({
+              projects: newProjects,
+              experiments: newExperiments,
+              contactInfo: newContact
+          }));
+          setShowAdminDashboard(false);
+      } catch (e: any) {
+          if (e.name === 'QuotaExceededError' || e.code === 22) {
+              alert("CRITICAL ERROR: Local Storage Full!\n\nYour images or PDF files are too large for the browser's local storage limit (approx 5MB).\n\n1. Use the 'EXPORT CODE' button to save your data.\n2. Manually update constants.ts.\n3. Reduce image/file sizes.");
+          } else {
+              alert("Error saving data: " + e.message);
+          }
+      }
   };
 
   return (
@@ -90,7 +103,7 @@ function App() {
         <Portfolio lang={lang} projects={projects} onSelectProject={setSelectedProject} />
         <Experiments lang={lang} projects={experiments} onSelectProject={setSelectedProject} />
       </main>
-      <Footer lang={lang} onOpenAdmin={() => setShowAdminLogin(true)} />
+      <Footer lang={lang} contactInfo={contactInfo} onOpenAdmin={() => setShowAdminLogin(true)} />
 
       <AnimatePresence>
         {selectedProject && (
@@ -117,6 +130,7 @@ function App() {
           <AdminDashboard 
             projects={projects}
             experiments={experiments}
+            contactInfo={contactInfo}
             onSave={handleCmsSave}
             onClose={() => setShowAdminDashboard(false)}
             lang={lang}

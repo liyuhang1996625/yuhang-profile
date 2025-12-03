@@ -1,11 +1,18 @@
 
-import { Project, NavItem } from './types';
+import { Project, NavItem, ContactInfo } from './types';
 
 export const NAV_ITEMS: NavItem[] = [
   { id: 'about', label: 'About', label_zh: '关于', href: '#about' },
   { id: 'works', label: 'Works', label_zh: '作品', href: '#works' },
   { id: 'playground', label: 'Playground', label_zh: '实验', href: '#playground' },
 ];
+
+export const CONTACT_INFO: ContactInfo = {
+  tagline: "Let's build something.",
+  tagline_zh: "一起来构建些什么。",
+  email: "hello@yuhang.design",
+  resumeUrl: "#" // Default empty link
+};
 
 export const PORTFOLIO_PROJECTS: Project[] = [
   {

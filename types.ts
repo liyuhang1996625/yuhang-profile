@@ -27,5 +27,12 @@ export interface NavItem {
   href: string;
 }
 
+export interface ContactInfo {
+  tagline: string;
+  tagline_zh: string;
+  email: string;
+  resumeUrl: string; // Changed from social links to resume
+}
+
 export type Language = 'en' | 'zh';
 export type Theme = 'light' | 'dark';
