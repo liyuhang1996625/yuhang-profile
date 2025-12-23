@@ -5,104 +5,80 @@ import { motion, useSpring, useMotionValue } from 'framer-motion';
 const CustomCursor: React.FC = () => {
   const [isHovered, setIsHovered] = useState(false);
   
-  // Use MotionValues for high-performance updates directly to DOM
-  const cursorX = useMotionValue(-100);
-  const cursorY = useMotionValue(-100);
+  const mouseX = useMotionValue(-100);
+  const mouseY = useMotionValue(-100);
   
-  // Spring physics for the trailing outer ring
-  const springConfig = { damping: 25, stiffness: 700, mass: 0.5 };
-  const cursorXSpring = useSpring(cursorX, springConfig);
-  const cursorYSpring = useSpring(cursorY, springConfig);
+  // 极高响应性的弹簧配置：质量极小，刚度极大，阻尼适中
+  // 这会产生一种既有物理柔顺感又极度贴合鼠标轨迹的效果
+  const springConfig = { damping: 40, stiffness: 1500, mass: 0.05 };
+  const cursorXSpring = useSpring(mouseX, springConfig);
+  const cursorYSpring = useSpring(mouseY, springConfig);
 
   useEffect(() => {
     const moveCursor = (e: MouseEvent) => {
-      cursorX.set(e.clientX);
-      cursorY.set(e.clientY);
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
     };
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      // Check if hovering over interactive elements
-      if (
+      // Use !! to ensure isPointer is a boolean, as .closest() returns an Element or null
+      const isPointer = !!(
         target.tagName === 'A' || 
         target.tagName === 'BUTTON' || 
         target.closest('a') || 
         target.closest('button') ||
         target.classList.contains('cursor-pointer') ||
         window.getComputedStyle(target).cursor === 'pointer'
-      ) {
-        setIsHovered(true);
-      } else {
-        setIsHovered(false);
-      }
+      );
+      
+      setIsHovered(isPointer);
     };
 
-    window.addEventListener('mousemove', moveCursor);
-    window.addEventListener('mouseover', handleMouseOver); // Using mouseover for capturing bubbles
+    window.addEventListener('mousemove', moveCursor, { passive: true });
+    window.addEventListener('mouseover', handleMouseOver);
 
     return () => {
       window.removeEventListener('mousemove', moveCursor);
       window.removeEventListener('mouseover', handleMouseOver);
     };
-  }, [cursorX, cursorY]);
+  }, [mouseX, mouseY]);
 
-  // Hide on mobile/touch devices
+  // 移动端不渲染自定义鼠标
   if (typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
     return null;
   }
 
   return (
     <>
-      {/* Central Dot - No Delay */}
+      {/* 核心原点：直接使用 MotionValue，不经过弹簧，实现 0 延迟绝对跟手 */}
       <motion.div
         className="fixed top-0 left-0 w-1 h-1 bg-neon rounded-full pointer-events-none z-[9999] mix-blend-difference"
         style={{
-          x: cursorX,
-          y: cursorY,
+          x: mouseX,
+          y: mouseY,
           translateX: '-50%',
           translateY: '-50%',
         }}
       />
       
-      {/* Outer Ring - Spring Delay */}
+      {/* 外部光圈：使用极速弹簧，提供敏捷的视觉反馈 */}
       <motion.div
-        className="fixed top-0 left-0 border border-neon rounded-full pointer-events-none z-[9998] mix-blend-difference"
+        className="fixed top-0 left-0 border border-neon/40 rounded-full pointer-events-none z-[9998] mix-blend-difference"
         style={{
           x: cursorXSpring,
           y: cursorYSpring,
           translateX: '-50%',
           translateY: '-50%',
+          width: isHovered ? 48 : 24,
+          height: isHovered ? 48 : 24,
         }}
         animate={{
-          width: isHovered ? 40 : 20,
-          height: isHovered ? 40 : 20,
-          backgroundColor: isHovered ? 'rgba(0, 255, 65, 0.1)' : 'transparent',
-          borderColor: isHovered ? '#00FF41' : 'rgba(0, 255, 65, 0.5)',
+          backgroundColor: isHovered ? 'rgba(0, 255, 65, 0.1)' : 'rgba(0, 255, 65, 0)',
+          borderColor: isHovered ? 'rgba(0, 255, 65, 0.8)' : 'rgba(0, 255, 65, 0.3)',
         }}
-        transition={{
-          type: "spring",
-          stiffness: 400,
-          damping: 28
-        }}
-      >
-        {/* Crosshair accents when hovered */}
-        <motion.div 
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            className="absolute top-1/2 left-[-4px] w-[2px] h-[2px] bg-neon" 
-        />
-        <motion.div 
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            className="absolute top-1/2 right-[-4px] w-[2px] h-[2px] bg-neon" 
-        />
-        <motion.div 
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            className="absolute top-[-4px] left-1/2 w-[2px] h-[2px] bg-neon" 
-        />
-        <motion.div 
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            className="absolute bottom-[-4px] left-1/2 w-[2px] h-[2px] bg-neon" 
-        />
-      </motion.div>
+        transition={{ duration: 0.2 }}
+      />
     </>
   );
 };

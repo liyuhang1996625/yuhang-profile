@@ -12,6 +12,7 @@ import CustomCursor from './components/CustomCursor';
 import { AnimatePresence } from 'framer-motion';
 import { Language, Theme, Project, ContactInfo } from './types';
 import { PORTFOLIO_PROJECTS, EXPERIMENTAL_PROJECTS, CONTACT_INFO } from './constants';
+import { getPortfolioData, savePortfolioData } from './storage';
 
 function App() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -29,29 +30,30 @@ function App() {
   const [contactInfo, setContactInfo] = useState<ContactInfo>(CONTACT_INFO);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 100);
-    
-    // Load data from LocalStorage if available
-    const savedData = localStorage.getItem('portfolio_data');
-    if (savedData) {
-        try {
-            const parsed = JSON.parse(savedData);
-            setProjects(parsed.projects || PORTFOLIO_PROJECTS);
-            setExperiments(parsed.experiments || EXPERIMENTAL_PROJECTS);
-            setContactInfo(parsed.contactInfo || CONTACT_INFO);
-        } catch (e) {
-            console.error("Failed to load saved data", e);
-            setProjects(PORTFOLIO_PROJECTS);
-            setExperiments(EXPERIMENTAL_PROJECTS);
-            setContactInfo(CONTACT_INFO);
+    const loadData = async () => {
+      try {
+        const savedData = await getPortfolioData();
+        if (savedData) {
+          setProjects(savedData.projects || PORTFOLIO_PROJECTS);
+          setExperiments(savedData.experiments || EXPERIMENTAL_PROJECTS);
+          setContactInfo(savedData.contactInfo || CONTACT_INFO);
+        } else {
+          // Fallback to constants if no DB record
+          setProjects(PORTFOLIO_PROJECTS);
+          setExperiments(EXPERIMENTAL_PROJECTS);
+          setContactInfo(CONTACT_INFO);
         }
-    } else {
+      } catch (e) {
+        console.error("Failed to load IndexedDB data", e);
         setProjects(PORTFOLIO_PROJECTS);
         setExperiments(EXPERIMENTAL_PROJECTS);
         setContactInfo(CONTACT_INFO);
-    }
+      } finally {
+        setIsLoaded(true);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -71,25 +73,23 @@ function App() {
     setLang(prev => prev === 'en' ? 'zh' : 'en');
   };
 
-  const handleCmsSave = (newProjects: Project[], newExperiments: Project[], newContact: ContactInfo) => {
-      setProjects(newProjects);
-      setExperiments(newExperiments);
-      setContactInfo(newContact);
-      
-      // Save to local storage for persistence across reloads
+  const handleCmsSave = async (newProjects: Project[], newExperiments: Project[], newContact: ContactInfo) => {
       try {
-          localStorage.setItem('portfolio_data', JSON.stringify({
+          await savePortfolioData({
               projects: newProjects,
               experiments: newExperiments,
               contactInfo: newContact
-          }));
+          });
+          
+          setProjects(newProjects);
+          setExperiments(newExperiments);
+          setContactInfo(newContact);
           setShowAdminDashboard(false);
+          
+          alert(lang === 'zh' ? '保存成功！' : 'DATA SAVED SUCCESSFULLY!');
       } catch (e: any) {
-          if (e.name === 'QuotaExceededError' || e.code === 22) {
-              alert("CRITICAL ERROR: Local Storage Full!\n\nYour images or PDF files are too large for the browser's local storage limit (approx 5MB).\n\n1. Use the 'EXPORT CODE' button to save your data.\n2. Manually update constants.ts.\n3. Reduce image/file sizes.");
-          } else {
-              alert("Error saving data: " + e.message);
-          }
+          console.error("Error saving to IndexedDB:", e);
+          alert(lang === 'zh' ? "保存失败: " + e.message : "Error saving data: " + e.message);
       }
   };
 
@@ -98,7 +98,6 @@ function App() {
       <CustomCursor />
       <Navbar lang={lang} theme={theme} toggleTheme={toggleTheme} toggleLang={toggleLang} />
       <main>
-        {/* Pass theme to Hero for WebGL color update */}
         <Hero lang={lang} theme={theme} />
         <Portfolio lang={lang} projects={projects} onSelectProject={setSelectedProject} />
         <Experiments lang={lang} projects={experiments} onSelectProject={setSelectedProject} />
@@ -115,7 +114,6 @@ function App() {
         )}
       </AnimatePresence>
 
-      {/* CMS Modals */}
       {showAdminLogin && (
           <AdminLogin 
             onLogin={() => {

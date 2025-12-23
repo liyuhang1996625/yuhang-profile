@@ -1,4 +1,10 @@
 
+export interface ContentBlock {
+  type: 'text' | 'image';
+  value: string;
+  value_zh?: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -10,11 +16,13 @@ export interface Project {
   imageUrl: string;
   year: string;
   link?: string;
-  // New fields for detail view
   role?: string;
   role_zh?: string;
   client?: string;
   stack?: string[];
+  // 混合图文内容块取代原有的单一描述和画廊
+  contentBlocks?: ContentBlock[];
+  // 保留旧字段用于兼容性
   fullDescription?: string;
   fullDescription_zh?: string;
   gallery?: string[];
@@ -31,7 +39,7 @@ export interface ContactInfo {
   tagline: string;
   tagline_zh: string;
   email: string;
-  resumeUrl: string; // Changed from social links to resume
+  resumeUrl: string;
 }
 
 export type Language = 'en' | 'zh';
